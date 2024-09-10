@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PostRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -25,7 +27,7 @@ class Post
 
     #[ORM\Column(
         type: Types::DATETIME_MUTABLE,
-        #valeur par default
+        #valeur par default, false 0
         options: [
         'default' => 'CURRENT_TIMESTAMP',
         ]
@@ -44,6 +46,17 @@ class Post
         ]
     )]
     private ?bool $postPublished = null;
+
+    /**
+     * @var Collection<int, Section>
+     */
+    #[ORM\ManyToMany(targetEntity: Section::class, mappedBy: 'sectionPost')]
+    private Collection $sections;
+
+    public function __construct()
+    {
+        $this->sections = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -106,6 +119,33 @@ class Post
     public function setPostPublished(?bool $postPublished): static
     {
         $this->postPublished = $postPublished;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Section>
+     */
+    public function getSections(): Collection
+    {
+        return $this->sections;
+    }
+
+    public function addSection(Section $section): static
+    {
+        if (!$this->sections->contains($section)) {
+            $this->sections->add($section);
+            $section->addSectionPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSection(Section $section): static
+    {
+        if ($this->sections->removeElement($section)) {
+            $section->removeSectionPost($this);
+        }
 
         return $this;
     }
